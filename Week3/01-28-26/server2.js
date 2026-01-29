@@ -46,7 +46,7 @@ app.post('/products', (req, res) => {
         rating
     } = req.body
 
-    const jsonData = JSON.parse(fs.readFileSync("./products.json", { encoding: "utf-8" }))
+    const jsonData = JSON.parse(fs.readFileSync("./products.json", { encoding: "utf-8" }));
 
     const newProduct = {
         id: idGenerator(jsonData.products),
