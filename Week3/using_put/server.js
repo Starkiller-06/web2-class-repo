@@ -72,10 +72,7 @@ app.post('/products', (req, res) => {
     })
 })
 
-app.put('/products/:id', (req, res
-
-    
-) => {
+app.put('/products/:id', (req, res) => {
     const id = req.params.id
     const { count, products } = JSON.parse(fs.readFileSync("./products.json", { encoding: "utf-8" }))
 
@@ -117,5 +114,4 @@ app.put('/products/:id', (req, res
     })
 })
     
-
 app.listen(9000, () => console.log("Server running on port 9000"))
