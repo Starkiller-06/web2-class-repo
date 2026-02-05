@@ -10,6 +10,26 @@ function idGenerator (products) {
     return products.length + 1
 }
 
+function findIdx(req, res, next) {
+    const data = JSON.parse(fs.readFileSync("./products.json", { encoding: "utf-8" }))
+
+    const id = req.params.id
+    const productIdx = data.products.findIndex((prod) => prod.id == id)
+
+    if (productIdx === -1) {
+        return res.status(404).json({
+            "msg": "Product not found",
+            "productId": id
+        })
+    }
+
+    req.products = data.products
+    req.productIdx = productIdx
+    req.count = data.count
+
+    next()
+}
+
 app.get("/products", (req, res) => {
     const { products } = JSON.parse(fs.readFileSync("./products.json", { encoding: "utf-8" }))
     const { category, subcategory, search } = req.query
@@ -72,19 +92,7 @@ app.post('/products', (req, res) => {
     })
 })
 
-app.put('/products/:id', (req, res) => {
-    const id = req.params.id
-    const { count, products } = JSON.parse(fs.readFileSync("./products.json", { encoding: "utf-8" }))
-
-    const productIdx = products.findIndex((prod) => prod.id == id)
-
-    if (productIdx === -1) {
-        return res.status(404).json({
-            "msg": "Product not found",
-            "productId": id
-        })
-    }
-
+app.put('/products/:id', findIdx, (req, res) => {
     const {
         name,
         category,
@@ -94,6 +102,8 @@ app.put('/products/:id', (req, res) => {
         stock,
         rating
     } = req.body
+
+    const { products, productIdx, count } = req
 
     products[productIdx] = {
         ...products[productIdx],
@@ -112,6 +122,18 @@ app.put('/products/:id', (req, res) => {
     res.status(200).json({
         "msg": "Product updated successfully",
     })
+})
+
+app.delete('/products/:id', findIdx, (req, res) => {
+    const { products, productIdx, count} = req
+
+    products.splice(productIdx, 1)
+    const newCount = count - 1
+
+    const jsonData = JSON.stringify({ count: newCount, products })
+    fs.writeFileSync("./products.json", jsonData);
+    
+    res.status(204).end()
 })
     
 app.listen(9000, () => console.log("Server running on port 9000"))
