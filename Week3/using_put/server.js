@@ -1,10 +1,22 @@
 const express = require("express")
 const app = express()
 const fs = require("fs")
-
+const {Sequelize} = require('Sequelize')
 
 app.use(express.json())
 app.use(express.urlencoded())
+
+
+new Sequelize('products_inventory, root, root', {
+    host: '127.0.0.1',
+    dialect: 'mysql',
+    
+})
+
+connect.authenticate().then(() => {
+    console.log("Connection made")
+
+})
 
 function idGenerator (products) {
     return products.length + 1
