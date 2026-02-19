@@ -1,19 +1,19 @@
 const express = require("express")
 const app = express()
 const fs = require("fs")
-const {Sequelize} = require('Sequelize')
+const {Sequelize} = require("sequelize")
 
 app.use(express.json())
 app.use(express.urlencoded())
 
 
-new Sequelize('products_inventory, root, root', {
+const conn = new Sequelize('products_inventory', 'root', '12345678', {
     host: '127.0.0.1',
     dialect: 'mysql',
     
 })
 
-connect.authenticate().then(() => {
+conn.authenticate().then(() => {
     console.log("Connection made")
 
 })

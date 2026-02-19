@@ -1,14 +1,13 @@
 const express = require("express")
 const app = express()
 const fs = require("fs")
-const { type } = require("os")
-const {Sequelize, DataTypes} = require('Sequelize')
+const {Sequelize, DataTypes} = require('sequelize')
 
 app.use(express.json())
 app.use(express.urlencoded())
 
 // DB connection
-new Sequelize('products_inventory, root, root', {
+const conn = new Sequelize('products_inventory', 'root', '12345678', {
     host: '127.0.0.1',
     dialect: 'mysql',
     
@@ -39,22 +38,27 @@ const Product = conn.define("Product", {
     name: {
         type: DataTypes.STRING,
         allowNull: false,
-        defaultValue: 0
+        unique: true
     },
     currency: {
-        type: DataTypes.DOUBLE.UNSIGNED,
+        type: DataTypes.STRING,
         allowNull: false,
         defaultValue: "USD"
     },
     stock: {
-        type: DataTypes.STRING,
+        type: DataTypes.INTEGER.UNSIGNED,
         allowNull: false,
         defaultValue: 0
     },
     rating: {
         type: DataTypes.FLOAT.UNSIGNED,
         allowNull: false,
-        defaultValue: 1
+        defaultValue: 0.0
+    },
+    price: {
+        type: DataTypes.FLOAT.UNSIGNED,
+        allowNull: false,
+        defaultValue: 0.0
     },
     subcategory_id: {
         type: DataTypes.INTEGER,
@@ -62,18 +66,22 @@ const Product = conn.define("Product", {
     }
 })
 
-
 Subcategory.belongsTo(Category, {
     foreignKey: "subcategory_id"
 })
-
+Category.hasMany(Subcategory, {
+    foreignKey: "subcategory_id"
+})
 Product.belongsTo(Subcategory, {
-    foreignKey: "category_id"
+    foreignKey: "subcategory_id"
+})
+Subcategory.hasMany(Product, {
+    foreignKey: "subcategory_id"
 })
 
-conn.sync({false: true})
+// conn.sync({ force: true });
 
-function fillInCategories() {
+async function fillInCategories() {
     /*
         1. retreiving categories from products.json,
         2. filtering out only the unique categories,
@@ -81,7 +89,7 @@ function fillInCategories() {
         4. Register the categories in the db
     */
 
-    const {} = fs.readFileSync("Products.json", {encoding: "utf-8"})
+    const { products } = JSON.parse(fs.readFileSync("products.json", {encoding: "utf-8"}))
     
     //let categories = products.map(product => product.category)
 
@@ -89,15 +97,31 @@ function fillInCategories() {
     categories.sort()
 
     for(const category of categories) {
-        Category.create({name:category})
+        await Category.create({name:category})
     }
+
+    fillInSubcategories()
 }
 
-connect.authenticate().then(() => {
-    console.log("Connection made")
+fillInCategories();
 
-})
+async function fillInSubcategories() {
+    const { products } = JSON.parse(fs.readFileSync("products.json", {encoding: "utf-8"}))
 
+    const subcategories = new Map()
+    for(const product of products) {
+        subcategories.set(product.subcategory, product.category)
+    }
+
+    console.log(subcategories)
+
+    for(const subcategory of subcategories) {
+        await Subcategory.create({
+            name: subcategory[0],
+            category_id: (await Category.findOne({where: {name: subcategory[1]}}))?.id
+        })
+    }
+}
 
 /* FUNCTIONS */
 function idGenerator (products) {
